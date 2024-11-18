@@ -30,6 +30,7 @@ Fn = TypeVar("Fn")
 
 
 def njit(fn: Fn, **kwargs: Any) -> Fn:
+    """Decorator to JIT compile functions with NUMBA."""
     return _njit(inline="always", **kwargs)(fn)  # type: ignore
 
 
@@ -138,21 +139,27 @@ class FastOps(TensorOps):
 
 # Implementations
 
-def is_aligned(a_strides: Strides, b_strides: Strides, a_shape: Shape, b_shape: Shape) -> bool:
+
+def is_aligned(
+    a_strides: Strides, b_strides: Strides, a_shape: Shape, b_shape: Shape
+) -> bool:
+    """Check if two tensors are stride aligned."""
     if len(a_shape) != len(b_shape):
         return False
-    
+
     for a_shape, b_shape in zip(a_shape, b_shape):
         if a_shape != b_shape:
             return False
-    
+
     for a_stride, b_stride in zip(a_strides, b_strides):
         if a_stride != b_stride:
             return False
-    
+
     return True
 
+
 is_aligned = njit(is_aligned)
+
 
 def tensor_map(
     fn: Callable[[float], float],
@@ -236,7 +243,9 @@ def tensor_zip(
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
-        if is_aligned(out_strides, a_strides, out_shape, a_shape) and is_aligned(out_strides, b_strides, out_shape, b_shape):
+        if is_aligned(out_strides, a_strides, out_shape, a_shape) and is_aligned(
+            out_strides, b_strides, out_shape, b_shape
+        ):
             for i in prange(len(out)):
                 out[i] = fn(a_storage[i], b_storage[i])
             return
@@ -252,7 +261,6 @@ def tensor_zip(
             broadcast_index(out_index, out_shape, b_shape, b_index)
             k = index_to_position(b_index, b_strides)
             out[o] = fn(a_storage[j], b_storage[k])
-        
 
     return njit(_zip, parallel=True)  # type: ignore
 
@@ -346,8 +354,8 @@ def _tensor_matrix_multiply(
         None : Fills in `out`
 
     """
-    a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
-    b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
+    # a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
+    # b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
 
     # TODO: Implement for Task 3.2.
     raise NotImplementedError("Need to implement for Task 3.2")
