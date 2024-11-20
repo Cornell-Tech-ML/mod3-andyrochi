@@ -221,20 +221,21 @@ def tensor_zip(
         b_shape: Shape,
         b_strides: Strides,
     ) -> None:
-        out_index = cuda.local.array(MAX_DIMS, numba.int32)
-        a_index = cuda.local.array(MAX_DIMS, numba.int32)
-        b_index = cuda.local.array(MAX_DIMS, numba.int32)
-        i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        # out_index = cuda.local.array(MAX_DIMS, numba.int32)
+        # a_index = cuda.local.array(MAX_DIMS, numba.int32)
+        # b_index = cuda.local.array(MAX_DIMS, numba.int32)
+        # i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        if i < out_size:
-            to_index(i, out_shape, out_index)
-            o = index_to_position(out_index, out_strides)
-            broadcast_index(out_index, out_shape, a_shape, a_index)
-            j = index_to_position(a_index, a_strides)
-            broadcast_index(out_index, out_shape, b_shape, b_index)
-            k = index_to_position(b_index, b_strides)
-            out[o] = fn(a_storage[j], b_storage[k])
+        NotImplementedError("Need to implement for Task 3.3")
+        # if i < out_size:
+        #     to_index(i, out_shape, out_index)
+        #     o = index_to_position(out_index, out_strides)
+        #     broadcast_index(out_index, out_shape, a_shape, a_index)
+        #     j = index_to_position(a_index, a_strides)
+        #     broadcast_index(out_index, out_shape, b_shape, b_index)
+        #     k = index_to_position(b_index, b_strides)
+        #     out[o] = fn(a_storage[j], b_storage[k])
 
     return cuda.jit()(_zip)  # type: ignore
 
@@ -271,8 +272,8 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
         cache[pos] = a[i]
         cuda.syncthreads()
         if pos == 0:
-            tmp = 0.0
-            for j in range(0, BLOCK_DIM):
+            tmp = 0
+            for j in range(BLOCK_DIM):
                 tmp += cache[j]
             out[cuda.blockIdx.x] = tmp
 
