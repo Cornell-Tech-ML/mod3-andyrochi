@@ -260,14 +260,21 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
         size (int):  length of a.
 
     """
-    # BLOCK_DIM = 32
+    BLOCK_DIM = 32
 
-    # cache = cuda.shared.array(BLOCK_DIM, numba.float64)
-    # i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    # pos = cuda.threadIdx.x
+    cache = cuda.shared.array(BLOCK_DIM, numba.float64)
+    i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    pos = cuda.threadIdx.x
 
     # TODO: Implement for Task 3.3.
-    raise NotImplementedError("Need to implement for Task 3.3")
+    if i < size:
+        cache[pos] = a[i]
+        cuda.syncthreads()
+        if pos == 0:
+            tmp = 0.0
+            for j in range(0, BLOCK_DIM):
+                tmp += cache[j]
+            out[cuda.blockIdx.x] = tmp
 
 
 jit_sum_practice = cuda.jit()(_sum_practice)
