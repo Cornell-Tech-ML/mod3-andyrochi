@@ -320,14 +320,34 @@ def tensor_reduce(
         reduce_dim: int,
         reduce_value: float,
     ) -> None:
-        # BLOCK_DIM = 1024
-        # cache = cuda.shared.array(BLOCK_DIM, numba.float64)
-        # out_index = cuda.local.array(MAX_DIMS, numba.int32)
-        # out_pos = cuda.blockIdx.x
-        # pos = cuda.threadIdx.x
+        BLOCK_DIM = 1024
+        cache = cuda.shared.array(BLOCK_DIM, numba.float64)
+        out_index = cuda.local.array(MAX_DIMS, numba.int32)
+        out_pos = cuda.blockIdx.x
+        pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        raise NotImplementedError("Need to implement for Task 3.3")
+        out_reduce_dims = out_shape[reduce_dim]
+        out_other_dims = out_size // out_reduce_dims
+        out_reduce_i = out_pos // out_other_dims
+
+        if out_reduce_i * BLOCK_DIM + pos < a_shape[reduce_dim]:
+            # locate the logical locality of a
+            to_index(out_pos, out_shape, out_index)
+            # get reduce_dim index
+            out_index[reduce_dim] = pos
+            a_index = index_to_position(out_index, a_strides)
+            cache[pos] = a_storage[a_index]
+            cuda.syncthreads()
+
+            if pos == 0:
+                temp = reduce_value
+                reduce_size = min(
+                    BLOCK_DIM, a_shape[reduce_dim] - BLOCK_DIM * out_reduce_i - pos
+                )
+                for i in range(reduce_size):
+                    temp = fn(temp, cache[i])
+                out[out_pos] = temp
 
     return jit(_reduce)  # type: ignore
 
