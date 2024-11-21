@@ -482,15 +482,14 @@ def _tensor_matrix_multiply(
             a_shared[pi, pj] = a_storage[
                 batch * a_batch_stride + i * a_strides[-2] + (k + pj) * a_strides[-1]
             ]
-        if k + pi < shared_dim_len and j < b_shape_2:
+        if j < b_shape_2 and k + pi < shared_dim_len:
             b_shared[pi, pj] = b_storage[
                 batch * b_batch_stride + (k + pi) * b_strides[-2] + j * b_strides[-1]
             ]
         cuda.syncthreads()
 
-        for pk in range(BLOCK_DIM):
-            if k + pk < shared_dim_len:
-                acc += a_shared[pi, pk] * b_shared[pk, pj]
+        for pk in range(min(BLOCK_DIM, shared_dim_len - k)):
+            acc += a_shared[pi, pk] * b_shared[pk, pj]
 
     if i < out_shape_1 and j < out_shape_2:
         out[batch * out_strides[0] + i * out_strides[-2] + j * out_strides[-1]] = acc
