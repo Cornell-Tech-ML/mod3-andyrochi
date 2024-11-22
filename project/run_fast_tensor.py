@@ -13,7 +13,7 @@ if numba.cuda.is_available():
 
 
 def default_log_fn(epoch, total_loss, correct, losses, time):
-    print("Epoch ", epoch, " loss ", total_loss, "correct", correct, "time", time)
+    print("Epoch ", f"{epoch:3d}", "| loss ", f"{total_loss:.5f}", "| correct", correct, " | time", f"{time:.4f}s")
 
 
 def RParam(*shape, backend):
@@ -104,7 +104,7 @@ class FastTrain:
             epoch_time = time_end - time_begin
             total_time += epoch_time
             # Logging
-            if epoch % 10 == 0 or epoch == max_epochs:
+            if epoch % 10 == 0 or epoch == max_epochs - 1:
                 X = minitorch.tensor(data.X, backend=self.backend)
                 y = minitorch.tensor(data.y, backend=self.backend)
                 out = self.model.forward(X).view(y.shape[0])
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     if args.DATASET == "xor":
         data = minitorch.datasets["Xor"](PTS)
     elif args.DATASET == "simple":
-        data = minitorch.datasets["Simple"].simple(PTS)
+        data = minitorch.datasets["Simple"](PTS)
     elif args.DATASET == "split":
         data = minitorch.datasets["Split"](PTS)
 
