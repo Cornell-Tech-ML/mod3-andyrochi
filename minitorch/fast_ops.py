@@ -302,9 +302,10 @@ def tensor_reduce(
             to_index(i, out_shape, out_index)
             o = index_to_position(out_index, out_strides)
             temp = out[o]
+            out_index[reduce_dim] = 0
+            j_base = index_to_position(out_index, a_strides)
             for s in range(reduce_size):
-                out_index[reduce_dim] = s
-                j = index_to_position(out_index, a_strides)
+                j = int(j_base + a_strides[reduce_dim] * s)
                 temp = fn(temp, a_storage[j])
             out[o] = temp
 
