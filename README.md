@@ -382,6 +382,13 @@ None
 
 # Task 3_4
 
+## CPU and GPU performance comparison
+
+Here, we perform matrix multiplication on `size`x`size` matrices with `size = {64, 128, 256, 512, 1024}` and plot the time taken for both CPU and GPU implementations. We can see that the GPU implementation speeds up gradually as the input grows.
+![](docs/plot.png)
+
+# Task 3_5
+
 ## Hidden=100 Split Dataset
 **CPU**
 

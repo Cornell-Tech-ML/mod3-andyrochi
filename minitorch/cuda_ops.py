@@ -469,28 +469,37 @@ def _tensor_matrix_multiply(
     #    b) Copy into shared memory for b matrix
     #    c) Compute the dot produce for position c[i, j]
     # TODO: Implement for Task 3.4.
-    shared_dim_len = a_shape[-1]
-    out_shape_1 = out_shape[-2]
-    out_shape_2 = out_shape[-1]
-    a_shape_1 = a_shape[-2]
-    b_shape_2 = b_shape[-1]
+    shared_dim_len = a_shape[-1]  # shared dimension length
+    out_shape_1 = out_shape[-2]  # `out` matrix rows
+    out_shape_2 = out_shape[-1]  # `out` matrix cols
+    a_shape_1 = a_shape[-2]  # `a` matrix rows
+    b_shape_2 = b_shape[-1]  # `b` matrix cols
 
+    # initialize acc to 0
     acc = 0
+
+    # Loop over the shared dimension in chunks of BLOCK_DIM (to handle matrices too large for shared memory).
     for k in range(0, shared_dim_len, BLOCK_DIM):
+        # Load a block of matrix `a` into shared memory if within bounds.
         if i < a_shape_1 and k + pj < shared_dim_len:
-            # move a into shared memory
             a_shared[pi, pj] = a_storage[
                 batch * a_batch_stride + i * a_strides[-2] + (k + pj) * a_strides[-1]
             ]
+
+        # Load a block of matrix `b` into shared memory if within bounds.
         if j < b_shape_2 and k + pi < shared_dim_len:
             b_shared[pi, pj] = b_storage[
                 batch * b_batch_stride + (k + pi) * b_strides[-2] + j * b_strides[-1]
             ]
+        # sync before computation
         cuda.syncthreads()
 
+        # Perform the dot product calculation for the current block.
+        # Each thread computes a partial sum for the position c[i, j] using the shared memory blocks.
         for pk in range(min(BLOCK_DIM, shared_dim_len - k)):
             acc += a_shared[pi, pk] * b_shared[pk, pj]
 
+    # Write the computed value to the output tensor `out` if within bounds.
     if i < out_shape_1 and j < out_shape_2:
         out[batch * out_strides[0] + i * out_strides[-2] + j * out_strides[-1]] = acc
 
